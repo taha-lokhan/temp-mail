@@ -1,3 +1,5 @@
+#!/usr/bin/env python3  # Shebang for Unix-based platforms
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -7,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import pyperclip  # This library helps in accessing the clipboard
+import os         # To handle file paths in a cross-platform manner
 
 # Set up Chrome options
 chrome_options = Options()
@@ -65,23 +68,25 @@ def check_for_email_and_fetch_otp():
     try:
         # Wait for the inbox to load
         inbox_table = wait.until(EC.presence_of_element_located((By.ID, "tm-mailbox")))
-        
+
         # Find the first email in the inbox (you might need to adjust the XPath depending on the page structure)
         first_email = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='tm-mailbox']/div[1]")))
         first_email.click()  # Open the first email
-        
+
         # Wait for the email content to load
         email_body = wait.until(EC.visibility_of_element_located((By.ID, "tm-message-content")))
-        
+
         # Extract OTP or relevant text (modify based on the structure of the email)
         otp_text = email_body.text
         print(f"Email content fetched: {otp_text}")
-        
-        # Save OTP or email content to a file
-        with open('otp.txt', 'w') as file:
+
+        # Save OTP or email content to a file in a platform-independent way
+        script_dir = os.path.dirname(__file__)  # Absolute path of script directory
+        file_path = os.path.join(script_dir, 'otp.txt')  # Platform-independent path
+        with open(file_path, 'w') as file:
             file.write(otp_text)
-        print("OTP/email content saved to otp.txt.")
-    
+        print(f"OTP/email content saved to {file_path}.")
+
     except Exception as e:
         print(f"Error while checking for or reading email: {e}")
 
@@ -101,7 +106,7 @@ if email_filled:
     temp_email = get_email()
     if temp_email:
         print(f"Temporary email: {temp_email}")
-        
+
         # Step 3: Keep trying to copy the email until it is successfully copied to the clipboard
         email_copied = False
         while not email_copied:
@@ -111,7 +116,7 @@ if email_filled:
                 print("Found the Copy button.")
                 copy_button.click()  # Click the button to copy the email address
                 print("Clicked the Copy button.")
-                
+
                 # Check if the email has been successfully copied to the clipboard
                 time.sleep(10)  # Wait a moment before checking the clipboard
                 if is_email_copied_to_clipboard(temp_email):
@@ -123,7 +128,7 @@ if email_filled:
                 # Fallback: Copy the email text directly from the email field
                 print("Copy button not found. Falling back to manually copying the email from the text field.")
                 manually_copy_email_to_clipboard(temp_email)
-                
+
                 # Verify if the email has been copied to the clipboard
                 if is_email_copied_to_clipboard(temp_email):
                     print("Email manually copied to clipboard successfully.")
